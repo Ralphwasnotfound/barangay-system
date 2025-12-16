@@ -1,6 +1,6 @@
 <template>
-    <div>
-
+    <div class="py-20">
+        <img src="/img/WestKibaweLogo.png" class="w-full h-full object-cover" alt="">
     </div>
 </template>
 
