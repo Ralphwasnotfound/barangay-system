@@ -2,11 +2,6 @@
       <div class="">
         <div class="p-3 sm:p-4">
           <div class="relative overflow-x-auto rounded-lg border border-gray-200 shadow-sm bg-white">
-
-            <p v-if="loading" class="p-4 text-gray-500">
-              Loading data...
-            </p>
-
             <table class="min-w-[640px] w-full text-sm text-left text-gray-700">
               <thead class="bg-gray-100 border-b border-gray-200">
                 <tr>
@@ -49,20 +44,21 @@
           </div>
         </div>
 
-        <RecieptModal
+        <ReceiptModal
           v-if="showReceiptModal"
           :family="selectedFamily"
           @close="showReceiptModal = false"
+          :readonly="true"
         />
       </div>
 </template>
 
 <script>
-import RecieptModal from '~/components/Modals/RecieptModal.vue';
+import ReceiptModal from '~/components/Modals/ReceiptModal.vue';
 
     export default {
         components: {
-            RecieptModal
+            ReceiptModal
         },
         data() {
             return {
@@ -79,6 +75,9 @@ import RecieptModal from '~/components/Modals/RecieptModal.vue';
         },
         methods: {
             async fetchFamilies() {
+              this.$loading.show('Loading Data, Please wait...')
+
+              try {
                 const supabase = useSupabaseClient()
 
                 const { data, error } = await supabase
@@ -108,8 +107,10 @@ import RecieptModal from '~/components/Modals/RecieptModal.vue';
                         0
                     )
                 }))
-
+              } finally {
                 this.loading = false
+                this.$loading.hide()
+              } 
             },
             openReceiptModal(family) {
                 this.selectedFamily = family

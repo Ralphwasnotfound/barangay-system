@@ -159,6 +159,20 @@ export default {
 
       const supabase = useSupabaseClient()
 
+      const normalizeReceipt = this.normalizeReceipt(this.form.receipt_number)
+
+      const { data:existing } = await supabase
+        .from('payments')
+        .select('id')
+        .eq('receipt_number_normalized', normalizeReceipt)
+        .maybeSingle()
+
+        if (existing) {
+          this.error = 'Receipt number already exists.'
+          this.loading = false
+          return
+        }
+
       const { error } = await supabase
         .from('payments')
         .insert([{
@@ -166,7 +180,8 @@ export default {
           member_id: this.form.member_id,
           amount: this.form.amount,
           category: this.form.category,
-          receipt_number: this.form.receipt_number
+          receipt_number: this.form.receipt_number,
+          receipt_number_normalized: normalizeReceipt
         }])
 
       if (error) {
@@ -178,6 +193,14 @@ export default {
       this.$emit('saved')
       this.$emit('close')
       this.loading = false
+    },
+
+    normalizeReceipt(value) {
+      return value
+        .toString()
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9]/g, '')
     }
   }
 }
