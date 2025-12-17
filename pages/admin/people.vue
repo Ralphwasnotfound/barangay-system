@@ -95,6 +95,12 @@
                     </tbody>
                 </table>
             </div>
+
+            <PaginationGlobal
+              :page="page"
+              :total-pages="totalPages"
+              @update:page="page = $event; fetchFamilies()"
+            />
         </div>
 
         <RecieptModal
@@ -138,6 +144,7 @@
         @confirm="deleteFamily"
         @cancel="showDeleteFamilyConfirm = false"
         />
+
     </div>
 </template>
 
@@ -150,6 +157,7 @@ import AddMembersModal from '~/components/Modals/AddMembersModal.vue'
 import AddPaymentModal from '~/components/Modals/AddPaymentModal.vue'
 import EditFamilyModal from '~/components/Modals/EditFamilyModal.vue';
 import DeleteModal from '~/components/Modals/DeleteModal.vue';
+import PaginationGlobal from '~/components/Modals/Pagination/PaginationGlobal.vue';
 
     export default {
       components: {
@@ -159,7 +167,8 @@ import DeleteModal from '~/components/Modals/DeleteModal.vue';
         AddMembersModal,
         AddPaymentModal,
         EditFamilyModal,
-        DeleteModal
+        DeleteModal,
+        PaginationGlobal
       },
       data() {
         return {
@@ -172,10 +181,15 @@ import DeleteModal from '~/components/Modals/DeleteModal.vue';
           loading: true,
           error: null,
           showEditFamilyModal: false,
-          showDeleteFamilyConfirm: false
+          showDeleteFamilyConfirm: false,
+          // Pagination
+          page: 1,
+          pageSize: 10, 
+          totalPages: 1,
         }
       },
       async mounted() {
+        this.page = 1
         await this.fetchFamilies()
       },
       methods: {
@@ -185,7 +199,10 @@ import DeleteModal from '~/components/Modals/DeleteModal.vue';
           try{
             const supabase = useSupabaseClient()
 
-            const { data, error } = await supabase
+            const from = (this.page - 1) * this.pageSize
+            const to = from + this.pageSize - 1
+
+            const { data, error, count } = await supabase
               .from('families')
               .select(`
                 id,
@@ -194,25 +211,28 @@ import DeleteModal from '~/components/Modals/DeleteModal.vue';
                 payments (
                   amount
                 )
-              `)
+              `, {count: 'exact' })
+              .range(from, to)
 
-            if (error) {
-              this.error = error.message
-              console.error(error)
-              return
-            }
-          
-            this.families = data.map(f => ({
-              id: f.id,
-              head_name: f.head_name,
-              address: f.address,
-              total_payment: (f.payments || []).reduce(
-                (sum, p) => sum + Number(p.amount),
-                0
-              ),
+              if (error) throw error 
 
-              canDelete: (f.payments || []).length === 0
+              this.totalPages = count
+                ? Math.ceil(count / this.pageSize)
+                : 1
+
+              this.families = data.map(f => ({
+                id: f.id,
+                head_name: f.head_name,
+                address: f.address,
+                total_payment: (f.payments || []).reduce(
+                  (sum, p) => sum + Number(p.amount),
+                  0
+                ),
+                canDelete: (f.payments || []).length === 0
             }))
+          } catch (err) {
+            console.error(err)
+            this.$notify.error('Failed to load families')
           } finally {
             this.loading = false
             this.$loading.hide()

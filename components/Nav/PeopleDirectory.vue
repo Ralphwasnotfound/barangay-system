@@ -40,8 +40,12 @@
                 </tr>
               </tbody>
             </table>
-
           </div>
+          <PaginationGlobal
+            :page="page"
+            :total-pages="totalPages"
+            @update:page="page = $event; fetchFamilies()"
+          />
         </div>
 
         <ReceiptModal
@@ -55,19 +59,24 @@
 
 <script>
 import ReceiptModal from '~/components/Modals/ReceiptModal.vue';
+import PaginationGlobal from '~/components/Modals/Pagination/PaginationGlobal.vue';
 
     export default {
         components: {
-            ReceiptModal
+            ReceiptModal,
+            PaginationGlobal
         },
         data() {
             return {
-                showReceiptModal: false,
-                selectedFamily: null,
-
-                families: [],
-                loading: true,
-                error: null
+              showReceiptModal: false,
+              selectedFamily: null,
+              families: [],
+              loading: true,
+              error: null,
+              // Pagination
+              page: 1,
+              pageSize: 10, 
+              totalPages: 1,
             }
         },
         async mounted() {
@@ -80,34 +89,41 @@ import ReceiptModal from '~/components/Modals/ReceiptModal.vue';
               try {
                 const supabase = useSupabaseClient()
 
-                const { data, error } = await supabase
-                    .from('families')
+                const from = (this.page - 1) * this.pageSize
+                const to = from + this.pageSize - 1
 
-                    .select(`
-                    id,
-                    head_name,
-                    address,
-                    payments (
-                        amount
-                    )
-                `)
+                const { data, error, count } = await supabase
+                  .from('families')
+                  .select(`
+                  id,
+                  head_name,
+                  address,
+                  payments (
+                    amount
+                  )
+                `, {count: 'exact' })
+                .range(from, to)
 
-                if (error) {
-                    this.error = error.message
-                    console.error(error)
-                    return
-                }
+                if (error) throw error
+
+                this.totalPages = count
+                  ? Math.ceil(count / this.pageSize)
+                  : 1
+
                 // Compute Total Payment per family
                 this.families = data.map(f => ({
                     id: f.id,
                     head_name: f.head_name,
                     address: f.address,
-                    total_payment: f.payments.reduce(
+                    total_payment: (f.payments || []).reduce(
                         (sum, p) => sum + Number(p.amount),
                         0
                     )
                 }))
-              } finally {
+              } catch (err) {
+                console.error(err)
+                this.$notify.error('Failed to load Families')
+              }finally {
                 this.loading = false
                 this.$loading.hide()
               } 
