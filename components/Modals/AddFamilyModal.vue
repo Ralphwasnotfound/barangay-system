@@ -1,8 +1,5 @@
 <template>
-  <!-- OVERLAY -->
   <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-3">
-
-    <!-- MODAL -->
     <div class="w-full max-w-md bg-white rounded-lg shadow-lg">
 
       <!-- HEADER -->
@@ -10,77 +7,83 @@
         <h2 class="text-lg font-semibold text-gray-900">
           Add Head of the Family
         </h2>
-        <button
-          @click="$emit('close')"
-          class="text-gray-500 hover:text-gray-700 text-xl"
-        >
-          &times;
-        </button>
+        <button @click="$emit('close')" class="text-gray-500 text-xl">&times;</button>
       </div>
 
       <!-- BODY -->
       <form @submit.prevent="submit" class="px-5 py-4 space-y-4">
 
-        <!-- HEAD NAME -->
+        <!-- FIRST NAME -->
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">
-            Head of the Family
+          <label class="block text-sm font-medium mb-1">First Name</label>
+          <input
+            v-model="form.first_name"
+            required
+            placeholder="Dan Mar Alvin"
+            class="input"
+          />
+        </div>
+
+        <!-- MIDDLE NAME (OPTIONAL) -->
+        <div>
+          <label class="block text-sm font-medium mb-1">
+            Middle Name <span class="text-gray-400">(optional)</span>
           </label>
           <input
-            v-model="form.head_name"
-            type="text"
+            v-model="form.middle_name"
+            placeholder="Romano"
+            class="input"
+          />
+          <p v-if="middleNameError" class="text-xs text-red-600 mt-1">
+            Middle name must be at least 2 characters or left blank
+          </p>
+        </div>
+
+        <!-- LAST NAME -->
+        <div>
+          <label class="block text-sm font-medium mb-1">Last Name</label>
+          <input
+            v-model="form.last_name"
             required
-            placeholder="Juan Dela Cruz"
-            class="w-full rounded-lg border border-gray-300
-                   px-3 py-2 text-sm
-                   focus:ring-2 focus:ring-blue-500
-                   focus:border-blue-500 outline-none"
+            placeholder="Batiancila"
+            class="input"
+          />
+        </div>
+
+        <!-- SUFFIX -->
+        <div>
+          <label class="block text-sm font-medium mb-1">
+            Suffix <span class="text-gray-400">(optional)</span>
+          </label>
+          <input
+            v-model="form.suffix"
+            placeholder="Jr., III"
+            class="input"
           />
         </div>
 
         <!-- ADDRESS -->
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">
-            Address
-          </label>
+          <label class="block text-sm font-medium mb-1">Address</label>
           <textarea
             v-model="form.address"
-            rows="3"
             required
+            rows="3"
             placeholder="Purok 1, West Kibawe"
-            class="w-full rounded-lg border border-gray-300
-                   px-3 py-2 text-sm
-                   focus:ring-2 focus:ring-blue-500
-                   focus:border-blue-500 outline-none"
+            class="input"
           ></textarea>
         </div>
 
         <!-- ERROR -->
-        <p v-if="error" class="text-sm text-red-600">
-          {{ error }}
-        </p>
+        <p v-if="error" class="text-sm text-red-600">{{ error }}</p>
 
         <!-- ACTIONS -->
         <div class="flex justify-end gap-2 pt-2">
-          <button
-            type="button"
-            @click="$emit('close')"
-            class="px-4 py-2 text-sm rounded-lg
-                   border border-gray-300
-                   hover:bg-gray-100"
-          >
+          <button type="button" @click="$emit('close')" class="btn-outline">
             Cancel
           </button>
-
-          <button
-            type="submit"
-            :disabled="loading"
-            class="px-4 py-2 text-sm rounded-lg
-                   bg-blue-600 text-white
-                   hover:bg-blue-700
-                   disabled:opacity-50"
-          >
-            {{ loading ? 'Saving...' : 'Save' }}
+          <button type="submit" :disabled="loading || middleNameError" class="btn-primary">
+            {{ loading ? 'Saving…' : 'Save' }}
           </button>
         </div>
 
@@ -94,35 +97,92 @@ export default {
   data() {
     return {
       form: {
-        head_name: '',
+        first_name: '',
+        middle_name: '',
+        last_name: '',
+        suffix: '',
         address: ''
       },
       loading: false,
       error: null
     }
   },
+
+  computed: {
+    middleNameError() {
+      return (
+        this.form.middle_name &&
+        this.form.middle_name.trim().length === 1
+      )
+    }
+  },
+
   methods: {
     async submit() {
       this.loading = true
       this.error = null
-
+        
       const supabase = useSupabaseClient()
-
-      const { error } = await supabase
+        
+      const { data, error, status } = await supabase
         .from('families')
-        .insert([this.form])
-
-      if (error) {
-        this.error = error.message
+        .insert({
+          first_name: this.form.first_name,
+          middle_name: this.form.middle_name || null,
+          last_name: this.form.last_name,
+          suffix: this.form.suffix || null,
+          address: this.form.address
+        })
+      
+      // 🔴 DUPLICATE PERSON
+      if (status === 409) {
+        this.error = 'This person already exists.'
         this.loading = false
         return
       }
-
-      // SUCCESS
+    
+      // 🔴 OTHER ERRORS
+      if (error) {
+        this.error = error.message || 'Failed to save family.'
+        this.loading = false
+        return
+      }
+    
+      // ✅ SUCCESS
       this.$emit('saved')
       this.$emit('close')
       this.loading = false
     }
+
   }
 }
 </script>
+
+<style scoped>
+.input {
+  width: 100%;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  outline: none;
+}
+.input:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 2px rgb(37 99 235 / 0.3);
+}
+
+.btn-primary {
+  background: #2563eb;
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+}
+.btn-primary:hover { background: #1d4ed8; }
+
+.btn-outline {
+  border: 1px solid #d1d5db;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+}
+</style>

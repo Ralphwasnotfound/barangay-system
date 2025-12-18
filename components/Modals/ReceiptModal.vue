@@ -7,7 +7,7 @@
       <div class="flex items-center justify-between px-6 py-4 border-b">
         <div>
           <h2 class="text-lg font-semibold text-gray-900">
-            Payment Records — {{ family.head_name }}
+            Payment Records — {{ formatPersonName(family) }}
           </h2>
           <p class="text-sm text-gray-500">
             {{ family.address }}
@@ -58,7 +58,7 @@
               >
                 <!-- MEMBER NAME -->
                 <td class="px-6 py-4 font-medium text-gray-900">
-                  {{ m.full_name }}
+                  {{ formatMemberName(m)}}
                 
                   <!-- ADMIN ONLY -->
                   <template v-if="!readonly">
@@ -122,7 +122,7 @@
               >
                 <!-- MEMBER NAME -->
                 <td class="px-6 py-4 font-medium text-gray-900">
-                  {{ m.full_name }}
+                  {{ formatMemberName(m) }}
                 
                   <!-- ADMIN ONLY -->
                   <template v-if="!readonly">
@@ -294,7 +294,10 @@ export default {
         .from('members')
         .select(`
           id,
-          full_name,
+          first_name,
+          middle_name,
+          last_name,
+          suffix,
           payments (
             id,
             amount,
@@ -304,7 +307,7 @@ export default {
           )
         `)
         .eq('family_id', this.family.id)
-        .order('full_name')
+        .order('last_name')
 
       if (!error) {
         this.members = data || []
@@ -351,6 +354,31 @@ export default {
         this.selectedMember = null
         this.$loading.hide()
       }
+    },
+    formatMemberName(m) {
+  if (!m) return ''
+
+  const last = m.last_name || ''
+  const first = m.first_name || ''
+  const middle = m.middle_name
+    ? m.middle_name.trim().charAt(0).toUpperCase() + '.'
+    : ''
+  const suffix = m.suffix ? ` ${m.suffix}` : ''
+
+  return `${last}, ${first}${middle ? ' ' + middle : ''}${suffix}`
+},
+
+    formatPersonName(p) {
+      if (!p) return ''
+
+      const last = p.last_name || ''
+      const first = p.first_name || ''
+      const middle = p.middle_name
+        ? p.middle_name.charAt(0).toUpperCase() + '.'
+        : ''
+      const suffix = p.suffix ? ` ${p.suffix}` : ''
+
+      return `${last}, ${first}${middle ? ' ' + middle : ''}${suffix}`
     }
   },
 
@@ -361,7 +389,10 @@ async mounted() {
     .from('members')
     .select(`
       id,
-      full_name,
+        first_name,
+        middle_name,
+        last_name,
+        suffix,
       payments (
         id,
         amount,
@@ -371,7 +402,7 @@ async mounted() {
       )
     `)
     .eq('family_id', this.family.id)
-    .order('full_name')
+    .order('last_name')
 
   if (!error) {
     this.members = (data || []).map(m => ({

@@ -41,7 +41,7 @@
               :key="m.id"
               :value="m.id"
             >
-              {{ m.full_name }}
+              {{ formatMemberName(m) }}
             </option>
           </select>
         </div>
@@ -142,7 +142,12 @@ export default {
 
     const { data, error } = await supabase
       .from('members')
-      .select('id, full_name')
+      .select(`id, 
+      first_name,
+    middle_name,
+    last_name,
+    suffix
+    `)
       .eq('family_id', this.family.id)
       .order('full_name')
 
@@ -194,6 +199,19 @@ export default {
       this.$emit('close')
       this.loading = false
     },
+    formatMemberName(m) {
+  if (!m) return ''
+
+  const last = m.last_name || ''
+  const first = m.first_name || ''
+  const middle = m.middle_name
+    ? m.middle_name.trim().charAt(0).toUpperCase() + '.'
+    : ''
+  const suffix = m.suffix ? ` ${m.suffix}` : ''
+
+  return `${last}, ${first}${middle ? ' ' + middle : ''}${suffix}`
+},
+
 
     normalizeReceipt(value) {
       return value

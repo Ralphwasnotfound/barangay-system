@@ -1,7 +1,7 @@
 <template>
   <div class="max-w-5xl mx-auto p-4">
     <h1 class="text-2xl font-bold mb-1">
-      {{ member.full_name }}
+      {{ formatMemberName(member) }}
     </h1>
 
     <p class="text-gray-500 mb-6">
@@ -67,7 +67,23 @@ export default {
   methods: {
     formatDate(date) {
       return new Date(date).toLocaleString()
-    }
+    },
+    formatMemberName(m) {
+  if (!m) return ''
+
+  const last = m.last_name || ''
+  const first = m.first_name || ''
+
+  let middleInitial = ''
+  if (m.middle_name) {
+    middleInitial = m.middle_name.charAt(0).toUpperCase() + '.'
+  }
+
+  const suffix = m.suffix ? ` ${m.suffix}` : ''
+
+  return `${last}, ${first}${middleInitial ? ' ' + middleInitial : ''}${suffix}`
+}
+
   },
 
   async mounted() {
@@ -78,7 +94,13 @@ export default {
     // Fetch member (READ ONLY)
     const { data: member, error: memberError } = await supabase
       .from('members')
-      .select('id, full_name')
+      .select(`
+        id,
+        first_name,
+        middle_name,
+        last_name,
+        suffix
+      `)
       .eq('id', memberId)
       .single()
 

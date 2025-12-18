@@ -25,16 +25,62 @@
       <!-- BODY -->
       <form @submit.prevent="submit" class="px-5 py-4 space-y-4">
 
-        <!-- FULL NAME -->
+        <!-- FIRST NAME -->
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">
-            Full Name
+            First Name
           </label>
           <input
-            v-model="form.full_name"
+            v-model="form.first_name"
             type="text"
             required
-            placeholder="Maria Dela Cruz"
+            class="w-full rounded-lg border border-gray-300
+                   px-3 py-2 text-sm
+                   focus:ring-2 focus:ring-green-500
+                   focus:border-green-500 outline-none"
+          />
+        </div>
+
+        <!-- MIDDLE NAME -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">
+            Middle Name (optional)
+          </label>
+          <input
+            v-model="form.middle_name"
+            type="text"
+            class="w-full rounded-lg border border-gray-300
+                   px-3 py-2 text-sm
+                   focus:ring-2 focus:ring-green-500
+                   focus:border-green-500 outline-none"
+          />
+        </div>
+
+        <!-- LAST NAME -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">
+            Last Name
+          </label>
+          <input
+            v-model="form.last_name"
+            type="text"
+            required
+            class="w-full rounded-lg border border-gray-300
+                   px-3 py-2 text-sm
+                   focus:ring-2 focus:ring-green-500
+                   focus:border-green-500 outline-none"
+          />
+        </div>
+
+        <!-- SUFFIX -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">
+            Suffix (optional)
+          </label>
+          <input
+            v-model="form.suffix"
+            type="text"
+            placeholder="Jr., Sr., III"
             class="w-full rounded-lg border border-gray-300
                    px-3 py-2 text-sm
                    focus:ring-2 focus:ring-green-500
@@ -101,7 +147,10 @@ export default {
   data() {
     return {
       form: {
-        full_name: '',
+        first_name: '',
+        middle_name: '',
+        last_name: '',
+        suffix: '',
         relation: ''
       },
       loading: false,
@@ -113,23 +162,41 @@ export default {
       this.loading = true
       this.error = null
 
-      const supabase = useSupabaseClient()
-
-      const { error } = await supabase
-        .from('members')
-        .insert([{
-          family_id: this.family.id,
-          full_name: this.form.full_name,
-          relation: this.form.relation
-        }])
-
-      if (error) {
-        this.error = error.message
+      // ❗ Middle name validation
+      if (this.form.middle_name && this.form.middle_name.length === 1) {
+        this.error = 'Middle name must be at least 2 letters'
         this.loading = false
         return
       }
 
-      // SUCCESS
+      const supabase = useSupabaseClient()
+
+      const { error, status } = await supabase
+        .from('members')
+        .insert({
+          family_id: this.family.id,
+          first_name: this.form.first_name.trim(),
+          middle_name: this.form.middle_name || null,
+          last_name: this.form.last_name.trim(),
+          suffix: this.form.suffix || null,
+          relation: this.form.relation || null
+        })
+
+      // 🚫 Duplicate member
+      if (status === 409) {
+        this.error = 'This member already exists in this family.'
+        this.loading = false
+        return
+      }
+
+      // 🚫 Other error
+      if (error) {
+        this.error = error.message || 'Failed to add member.'
+        this.loading = false
+        return
+      }
+
+      // ✅ SUCCESS
       this.$emit('saved')
       this.$emit('close')
       this.loading = false
