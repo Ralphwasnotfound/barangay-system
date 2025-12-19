@@ -93,7 +93,11 @@
 </template>
 
 <script>
+import { useSupabaseClient } from '#imports'
+
 export default {
+  emits: ['close', 'saved'],
+
   data() {
     return {
       form: {
@@ -121,10 +125,10 @@ export default {
     async submit() {
       this.loading = true
       this.error = null
-        
+
       const supabase = useSupabaseClient()
-        
-      const { data, error, status } = await supabase
+
+      const { error } = await supabase
         .from('families')
         .insert({
           first_name: this.form.first_name,
@@ -133,30 +137,21 @@ export default {
           suffix: this.form.suffix || null,
           address: this.form.address
         })
-      
-      // 🔴 DUPLICATE PERSON
-      if (status === 409) {
-        this.error = 'This person already exists.'
-        this.loading = false
-        return
-      }
-    
-      // 🔴 OTHER ERRORS
+
       if (error) {
         this.error = error.message || 'Failed to save family.'
         this.loading = false
         return
       }
-    
-      // ✅ SUCCESS
+
       this.$emit('saved')
       this.$emit('close')
       this.loading = false
     }
-
   }
 }
 </script>
+
 
 <style scoped>
 .input {

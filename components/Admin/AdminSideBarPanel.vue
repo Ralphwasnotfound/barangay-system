@@ -64,6 +64,17 @@
 
         <li>
           <NuxtLink
+            to="/admin/reports/summary"
+            class="flex items-center px-3 py-2 rounded-lg text-gray-700
+                   hover:bg-gray-100"
+            @click="sidebarOpen = false"
+          >
+            Reports
+          </NuxtLink>
+        </li>
+
+        <li>
+          <NuxtLink
             to="/admin/activity-logs"
             class="flex items-center px-3 py-2 rounded-lg text-gray-700
                    hover:bg-gray-100"
