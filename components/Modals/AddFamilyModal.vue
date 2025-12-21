@@ -65,13 +65,21 @@
         <!-- ADDRESS -->
         <div>
           <label class="block text-sm font-medium mb-1">Address</label>
-          <textarea
-            v-model="form.address"
+          
+          <select
+            v-model="form.purok"
             required
-            rows="3"
-            placeholder="Purok 1, West Kibawe"
             class="input"
-          ></textarea>
+          >
+            <option disabled value="">Select Purok</option>
+            <option v-for="n in 7" :key="n" :value="n">
+              Purok {{ n }}
+            </option>
+          </select>
+
+          <p class="text-xs text-gray-500 mt-1">
+            West Kibawe, Kibawe Bukidnon
+          </p>
         </div>
 
         <!-- ERROR -->
@@ -93,6 +101,7 @@
 </template>
 
 <script>
+import { logActivity } from '@/utils/activityLogger'
 import { useSupabaseClient } from '#imports'
 
 export default {
@@ -105,7 +114,7 @@ export default {
         middle_name: '',
         last_name: '',
         suffix: '',
-        address: ''
+        purok: ''
       },
       loading: false,
       error: null
@@ -114,7 +123,7 @@ export default {
 
   computed: {
     middleNameError() {
-      return (
+      return !!(
         this.form.middle_name &&
         this.form.middle_name.trim().length === 1
       )
@@ -127,22 +136,31 @@ export default {
       this.error = null
 
       const supabase = useSupabaseClient()
+      const fullAddress = `Purok ${this.form.purok}, West Kibawe, Kibawe Bukidnon`
 
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('families')
         .insert({
-          first_name: this.form.first_name,
-          middle_name: this.form.middle_name || null,
-          last_name: this.form.last_name,
-          suffix: this.form.suffix || null,
-          address: this.form.address
+          first_name: this.form.first_name.trim(),
+          middle_name: this.form.middle_name?.trim() || null,
+          last_name: this.form.last_name.trim(),
+          suffix: this.form.suffix?.trim() || null,
+          address: fullAddress
         })
+        .select()
+        .single()
 
       if (error) {
         this.error = error.message || 'Failed to save family.'
         this.loading = false
         return
       }
+
+      await logActivity(supabase, {
+        action: 'create',
+        entity: 'family',
+        description: `Added head of the family: ${data.first_name} ${data.last_name}`
+      })
 
       this.$emit('saved')
       this.$emit('close')
