@@ -1,113 +1,108 @@
 <template>
-  <div>
+  <div class="bg-gray-50 min-h-screen">
     <AdminSideBarPanel />
 
-    <div class="p-6 sm:ml-64">
-      <div>
-        <h1 class="text-2xl font-bold mb-4">Reports</h1>
-        <NuxtLink to="/admin/reports/full">
-          <h1>Go to full reports</h1>
+    <div class="p-4 sm:p-6 sm:ml-64 space-y-8">
+
+      <!-- PAGE HEADER -->
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 class="text-2xl font-bold text-gray-900">Reports</h1>
+          <p class="text-sm text-gray-500">
+            Summary and breakdown by Purok
+          </p>
+        </div>
+
+        <NuxtLink
+          to="/admin/reports/full"
+          class="inline-flex items-center gap-2 text-sm font-medium
+                 text-blue-600 hover:underline"
+        >
+          View Full Reports →
         </NuxtLink>
       </div>
-      
 
-
-      <div class="flex gap-2 mb-4">
-  <button
-    v-for="p in ['all','week','month','quarter']"
-    :key="p"
-    @click="setPeriod(p)"
-    class="px-3 py-1 rounded text-sm border"
-    :class="selectedPeriod === p
-      ? 'bg-blue-600 text-white'
-      : 'bg-white text-gray-700'"
-  >
-    {{ p === 'all' ? 'All Time' : 'This ' + p.charAt(0).toUpperCase() + p.slice(1) }}
-  </button>
-</div>
-
+      <!-- PERIOD FILTER -->
+      <div class="flex flex-wrap gap-2">
+        <button
+          v-for="p in ['all','week','month','quarter']"
+          :key="p"
+          @click="setPeriod(p)"
+          class="px-4 py-2 rounded-lg text-sm border transition"
+          :class="selectedPeriod === p
+            ? 'bg-blue-600 text-white border-blue-600'
+            : 'bg-white text-gray-700 hover:bg-gray-100'"
+        >
+          {{ p === 'all' ? 'All Time' : 'This ' + p.charAt(0).toUpperCase() + p.slice(1) }}
+        </button>
+      </div>
 
       <!-- PUROK LOOP -->
       <div
         v-for="purok in purokReports"
         :key="purok.purok"
-        class="mb-6 rounded-lg border border-gray-200 bg-white shadow-sm"
+        class="bg-white rounded-2xl border shadow-sm overflow-hidden"
       >
-        <!-- HEADER -->
-        <div class="px-4 py-3 border-b">
-          <h2 class="text-lg font-semibold">
+
+        <!-- PUROK HEADER -->
+        <div class="px-5 py-4 border-b flex items-center justify-between">
+          <h2 class="text-lg font-semibold text-gray-900">
             {{ purok.purok }}
           </h2>
         </div>
 
-        <!-- PUROK SUMMARY -->
-        <div class="px-4 py-3 border-b bg-gray-50">
+        <!-- SUMMARY -->
+        <div class="px-5 py-4 bg-gray-50 border-b">
           <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center text-sm">
             <div>
               <p class="text-gray-500">Families</p>
-              <p class="font-semibold">{{ purok.summary.families }}</p>
+              <p class="text-lg font-semibold">{{ purok.summary.families }}</p>
             </div>
 
             <div>
               <p class="text-gray-500">Total Persons</p>
-              <p class="font-semibold">{{ purok.summary.totalPersons }}</p>
+              <p class="text-lg font-semibold">{{ purok.summary.totalPersons }}</p>
             </div>
 
             <div>
-              <p class="text-gray-500">Total Transactions</p>
-              <p class="font-semibold text-green-600">
+              <p class="text-gray-500">Transactions</p>
+              <p class="text-lg font-semibold text-green-600">
                 {{ purok.summary.totalTransactions }}
               </p>
             </div>
 
             <div>
-              <p class="text-gray-500">Total ₱</p>
-              <p class="font-semibold">
+              <p class="text-gray-500">Total Collection</p>
+              <p class="text-lg font-semibold">
                 ₱{{ formatCurrency(purok.summary.totalCollection) }}
               </p>
             </div>
           </div>
         </div>
 
-        <!-- TRANSACTION TIME SUMMARY -->
-        <div class="px-4 py-3 border-b">
-          <div class="grid grid-cols-2 sm:grid-cols-5 gap-4 text-center text-sm">
-            <div class="bg-gray-50 rounded p-2">
-              <p class="text-gray-500">All Time</p>
-              <p class="font-semibold">{{ purok.timeSummary.all }}</p>
-            </div>
-
-            <div class="bg-gray-50 rounded p-2">
-              <p class="text-gray-500">Today</p>
-              <p class="font-semibold">{{ purok.timeSummary.today }}</p>
-            </div>
-
-            <div class="bg-gray-50 rounded p-2">
-              <p class="text-gray-500">This Week</p>
-              <p class="font-semibold">{{ purok.timeSummary.week }}</p>
-            </div>
-
-            <div class="bg-gray-50 rounded p-2">
-              <p class="text-gray-500">This Month</p>
-              <p class="font-semibold">{{ purok.timeSummary.month }}</p>
-            </div>
-
-            <div class="bg-gray-50 rounded p-2">
-              <p class="text-gray-500">This Quarter</p>
-              <p class="font-semibold">{{ purok.timeSummary.quarter }}</p>
+        <!-- TIME SUMMARY -->
+        <div class="px-5 py-4 border-b">
+          <div class="grid grid-cols-2 sm:grid-cols-5 gap-3 text-center text-sm">
+            <div
+              v-for="(value, key) in purok.timeSummary"
+              :key="key"
+              class="bg-gray-100 rounded-lg p-3"
+            >
+              <p class="text-gray-500 capitalize">{{ key }}</p>
+              <p class="font-semibold">{{ value }}</p>
             </div>
           </div>
         </div>
 
         <!-- FAMILY TABLE -->
-        <div class="relative overflow-x-auto">
-          <table class="w-full text-sm text-left text-gray-700">
-            <thead class="text-xs uppercase bg-gray-100">
+        <div class="overflow-x-auto">
+          <table class="min-w-full text-sm text-left text-gray-700">
+            <thead class="bg-gray-100 text-xs uppercase">
               <tr>
-                <th class="px-4 py-3">Head of Family</th>
-                <th class="px-4 py-3 text-center">Members</th>
-                <th class="px-4 py-3 text-center">Transactions</th>
-                <th class="px-4 py-3 text-right">Total ₱</th>
+                <th class="px-5 py-3">Head of Family</th>
+                <th class="px-5 py-3 text-center">Members</th>
+                <th class="px-5 py-3 text-center">Transactions</th>
+                <th class="px-5 py-3 text-right">Total ₱</th>
               </tr>
             </thead>
 
@@ -117,38 +112,38 @@
                 :key="family.id"
                 class="border-b hover:bg-gray-50"
               >
-                <td class="px-4 py-2 font-medium">
+                <td class="px-5 py-3 font-medium">
                   {{ family.head }}
                 </td>
 
-                <td class="px-4 py-2 text-center">
+                <td class="px-5 py-3 text-center">
                   {{ family.members }}
                 </td>
 
-                <td class="px-4 py-2 text-center text-green-600 font-medium">
+                <td class="px-5 py-3 text-center text-green-600 font-semibold">
                   {{ family.transactionCount }}
                 </td>
 
-                <td class="px-4 py-2 text-right font-semibold">
+                <td class="px-5 py-3 text-right font-semibold">
                   ₱{{ formatCurrency(family.totalCollection) }}
                 </td>
               </tr>
 
-              <!-- EMPTY STATE -->
               <tr v-if="!purok.families.length">
-                <td colspan="4" class="px-4 py-6 text-center text-gray-500">
+                <td colspan="4" class="px-5 py-6 text-center text-gray-500">
                   No families found
                 </td>
               </tr>
             </tbody>
           </table>
         </div>
-        <!-- END FAMILY TABLE -->
+
       </div>
-      <!-- END PUROK LOOP -->
+      <!-- END PUROK -->
     </div>
   </div>
 </template>
+
 
 
 <script>

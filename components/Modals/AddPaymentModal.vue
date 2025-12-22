@@ -35,7 +35,7 @@
             required
             class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
           >
-            <option value="" disabled>Select member</option>
+            <option :value="null" disabled>Select member</option>
             <option
               v-for="m in members"
               :key="m.id"
@@ -52,7 +52,7 @@
             Amount (₱)
           </label>
           <input
-            v-model="form.amount"
+            v-model.number="form.amount"
             type="number"
             min="0"
             step="0.01"
@@ -117,6 +117,9 @@
 </template>
 
 <script>
+import { logActivity } from '@/utils/activityLogger';
+import { useSupabaseClient } from '#imports';
+
 export default {
   props: {
     family: {
@@ -130,8 +133,8 @@ export default {
       loading: false,
       error: null,
       form: {
-        member_id: '',
-        amount: '',
+        member_id: null,
+        amount: null,
         category: '',
         receipt_number: ''
       }
@@ -149,7 +152,8 @@ export default {
     suffix
     `)
       .eq('family_id', this.family.id)
-      .order('full_name')
+      .order('last_name', { ascending: true })
+      .order('first_name', { ascending: true })
 
     if (error) {
       console.error(error)
@@ -159,46 +163,63 @@ export default {
   },
   methods: {
     async submit() {
-      this.loading = true
-      this.error = null
+  this.loading = true
+  this.error = null
 
-      const supabase = useSupabaseClient()
+  const supabase = useSupabaseClient()
 
-      const normalizeReceipt = this.normalizeReceipt(this.form.receipt_number)
+  if (!this.form.receipt_number) {
+    this.error = 'Receipt number is required.'
+    this.loading = false
+    return
+  }
 
-      const { data:existing } = await supabase
-        .from('payments')
-        .select('id')
-        .eq('receipt_number_normalized', normalizeReceipt)
-        .maybeSingle()
+  const normalizeReceipt = this.normalizeReceipt(this.form.receipt_number)
 
-        if (existing) {
-          this.error = 'Receipt number already exists.'
-          this.loading = false
-          return
-        }
+  const { data: existing } = await supabase
+    .from('payments')
+    .select('id')
+    .eq('receipt_number_normalized', normalizeReceipt)
+    .maybeSingle()
 
-      const { error } = await supabase
-        .from('payments')
-        .insert([{
-          family_id: this.family.id,
-          member_id: this.form.member_id,
-          amount: this.form.amount,
-          category: this.form.category,
-          receipt_number: this.form.receipt_number,
-          receipt_number_normalized: normalizeReceipt
-        }])
+  if (existing) {
+    this.error = 'Receipt number already exists.'
+    this.loading = false
+    return
+  }
 
-      if (error) {
-        this.error = error.message
-        this.loading = false
-        return
-      }
+  const { data, error } = await supabase
+    .from('payments')
+    .insert({
+      family_id: this.family.id,
+      member_id: this.form.member_id,
+      amount: Number(this.form.amount),
+      category: this.form.category?.trim() || null,
+      receipt_number: this.form.receipt_number.trim(),
+      receipt_number_normalized: normalizeReceipt
+    })
+    .select()
+    .single()
 
-      this.$emit('saved')
-      this.$emit('close')
-      this.loading = false
-    },
+  if (error) {
+    this.error = error.message
+    this.loading = false
+    return
+  }
+
+  const member = this.members.find(m => m.id === this.form.member_id)
+
+  await logActivity(supabase, {
+    action: 'create',
+    entity: 'payment',
+    description: `Added payment (${data.category || 'uncategorized'}) for ${member.last_name}, ${member.first_name} — Receipt #${data.receipt_number}`
+  })
+
+  this.$emit('saved')
+  this.$emit('close')
+  this.loading = false
+},
+
     formatMemberName(m) {
   if (!m) return ''
 

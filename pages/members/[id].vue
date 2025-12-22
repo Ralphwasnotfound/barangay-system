@@ -1,58 +1,90 @@
 <template>
-  <div class="max-w-5xl mx-auto p-4">
-    <h1 class="text-2xl font-bold mb-1">
-      {{ formatMemberName(member) }}
-    </h1>
+  <div class="min-h-screen bg-gray-50 py-6 px-4">
+    <div class="max-w-5xl mx-auto">
 
-    <p class="text-gray-500 mb-6">
-      Payment History
-    </p>
+      <!-- HEADER -->
+      <div class="mb-6">
+        <h1 class="text-2xl font-bold text-gray-900">
+          {{ formatMemberName(member) }}
+        </h1>
+        <p class="text-sm text-gray-500">
+          Payment History
+        </p>
+      </div>
 
-    <div class="overflow-x-auto bg-white border rounded shadow-sm">
-      <table class="w-full text-sm text-left">
-        <thead class="bg-gray-100 border-b">
-          <tr>
-            <th class="px-4 py-3">Date</th>
-            <th class="px-4 py-3">Category</th>
-            <th class="px-4 py-3">Amount</th>
-            <th class="px-4 py-3">Receipt</th>
-          </tr>
-        </thead>
-
-        <tbody>
-          <tr
-            v-for="p in payments"
-            :key="p.id"
-            class="border-b"
+      <!-- TABLE CARD -->
+      <div
+        class="relative overflow-x-auto rounded-xl
+               border border-gray-200 bg-white
+               shadow-sm transition-all"
+      >
+        <table class="w-full text-sm text-left">
+          <thead
+            class="sticky top-0 z-10
+                   bg-gray-100 text-xs uppercase
+                   text-gray-600 border-b"
           >
-            <td class="px-4 py-3">
-              {{ formatDate(p.created_at) }}
-            </td>
-            <td class="px-4 py-3">
-              {{ p.category }}
-            </td>
-            <td class="px-4 py-3">
-              ₱{{ p.amount }}
-            </td>
-            <td class="px-4 py-3 font-mono">
-              {{ p.receipt_number }}
-            </td>
-          </tr>
+            <tr>
+              <th class="px-4 py-3">Date</th>
+              <th class="px-4 py-3">Category</th>
+              <th class="px-4 py-3 text-right">Amount</th>
+              <th class="px-4 py-3">Receipt</th>
+            </tr>
+          </thead>
 
-          <tr v-if="!loading && payments.length === 0">
-            <td colspan="4" class="px-4 py-6 text-center text-gray-500">
-              No payment records found
-            </td>
-          </tr>
-        </tbody>
-      </table>
+          <tbody>
+            <tr
+              v-for="p in payments"
+              :key="p.id"
+              class="border-b hover:bg-gray-50 transition-colors"
+            >
+              <td class="px-4 py-3 whitespace-nowrap">
+                {{ formatDate(p.created_at) }}
+              </td>
 
-      <p v-if="loading" class="p-4 text-gray-500">
-        Loading payments...
-      </p>
+              <td class="px-4 py-3">
+                <span
+                  class="inline-flex items-center px-2 py-0.5
+                         rounded-full text-xs font-medium
+                         bg-blue-100 text-blue-700"
+                >
+                  {{ p.category || 'Other' }}
+                </span>
+              </td>
+
+              <td class="px-4 py-3 text-right font-semibold text-gray-900">
+                ₱{{ Number(p.amount).toLocaleString() }}
+              </td>
+
+              <td class="px-4 py-3 font-mono text-gray-600">
+                {{ p.receipt_number }}
+              </td>
+            </tr>
+
+            <!-- EMPTY STATE -->
+            <tr v-if="!loading && payments.length === 0">
+              <td
+                colspan="4"
+                class="px-6 py-10 text-center text-gray-500"
+              >
+                No payment records found
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- LOADING -->
+        <div
+          v-if="loading"
+          class="p-6 text-center text-gray-500"
+        >
+          Loading payments…
+        </div>
+      </div>
     </div>
   </div>
 </template>
+
 
 <script>
 export default {

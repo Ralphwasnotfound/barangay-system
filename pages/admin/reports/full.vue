@@ -1,12 +1,17 @@
 <template>
-  <div class="p-6">
-    <h1 class="text-2xl font-bold mb-4">
+  <div class="min-h-screen bg-gray-50 p-6">
+    <h1 class="text-2xl font-bold mb-4 text-gray-900">
       Full Transaction Report (Spreadsheet View)
     </h1>
 
-    <div class="overflow-x-auto border rounded bg-white">
+    <div
+      class="relative overflow-x-auto rounded-xl border border-gray-200
+             bg-white shadow-sm transition-all"
+    >
       <table class="w-full text-sm border-collapse">
-        <thead class="bg-gray-100 text-xs uppercase">
+        <thead
+          class="sticky top-0 z-10 bg-gray-100 text-xs uppercase text-gray-600"
+        >
           <tr>
             <th class="border px-3 py-2 text-left">Level</th>
             <th class="border px-3 py-2 text-left">Name</th>
@@ -19,42 +24,65 @@
 
         <tbody>
           <template v-for="purok in purokReports" :key="purok.name">
+
             <!-- PUROK -->
-            <tr class="bg-blue-50 text-blue-800 font-semibold cursor-pointer border-b border-blue-200" @click="purok.open = !purok.open">
-              <td class="border px-3 py-2">Purok</td>
+            <tr
+              class="bg-blue-50/70 hover:bg-blue-100
+                     text-blue-800 font-semibold cursor-pointer
+                     transition-colors duration-200"
+              @click="purok.open = !purok.open"
+            >
+              <td class="border px-3 py-2 border-l-4 border-blue-400">
+                Purok
+              </td>
               <td class="border px-3 py-2" colspan="5">
                 {{ purok.open ? '▼' : '▶' }} {{ purok.name }}
               </td>
             </tr>
 
             <template v-if="purok.open">
+
               <!-- FAMILY -->
               <template v-for="family in purok.families" :key="family.id">
-                <tr class="bg-green-50 text-green-800 font-medium cursor-pointer border-b border-green-200 font-medium cursor-pointer" @click="family.open = !family.open">
-                  <td class="border px-3 py-2 pl-6">Family</td>
+                <tr
+                  class="bg-emerald-50/70 hover:bg-emerald-100
+                         text-emerald-800 font-medium cursor-pointer
+                         transition-colors duration-200"
+                  @click="family.open = !family.open"
+                >
+                  <td class="border px-3 py-2 pl-6 border-l-4 border-emerald-400">
+                    Family
+                  </td>
                   <td class="border px-3 py-2">
                     {{ family.open ? '▼' : '▶' }} {{ family.head }}
                   </td>
                   <td class="border px-3 py-2"></td>
                   <td class="border px-3 py-2"></td>
                   <td class="border px-3 py-2"></td>
-                  <td class="border px-3 py-2 text-right">
+                  <td class="border px-3 py-2 text-right font-semibold">
                     ₱{{ formatCurrency(family.total) }}
                   </td>
                 </tr>
 
                 <template v-if="family.open">
+
                   <!-- MEMBER -->
                   <template v-for="member in family.members" :key="member.id">
-                    <tr class="bg-yellow-50 text-yellow-800 cursor-pointer border-b border-yellow-200 cursor-pointer" @click="member.open = !member.open">
-                      <td class="border px-3 py-2 pl-10">Member</td>
+                    <tr
+                      class="bg-amber-50/70 hover:bg-amber-100
+                             cursor-pointer transition-colors duration-200"
+                      @click="member.open = !member.open"
+                    >
+                      <td class="border px-3 py-2 pl-10 border-l-4 border-amber-400">
+                        Member
+                      </td>
                       <td class="border px-3 py-2">
                         {{ member.open ? '▼' : '▶' }} {{ member.name }}
                       </td>
                       <td class="border px-3 py-2"></td>
                       <td class="border px-3 py-2"></td>
                       <td class="border px-3 py-2"></td>
-                      <td class="border px-3 py-2 text-right">
+                      <td class="border px-3 py-2 text-right font-medium">
                         ₱{{ formatCurrency(member.total) }}
                       </td>
                     </tr>
@@ -64,27 +92,49 @@
                       v-for="tx in member.transactions"
                       v-if="member.open"
                       :key="tx.id"
-                      class="bg-white text-gray-700 border-b border-gray-200"
+                      class="hover:bg-gray-50 transition-colors duration-150"
                     >
-                      <td class="border px-3 py-2 pl-14">Txn</td>
+                      <td class="border px-3 py-2 pl-14 border-l-4 border-gray-300 text-xs text-gray-500">
+                        Txn
+                      </td>
                       <td class="border px-3 py-2"></td>
-                      <td class="border px-3 py-2">{{ tx.receipt }}</td>
-                      <td class="border px-3 py-2">{{ tx.category }}</td>
-                      <td class="border px-3 py-2">{{ tx.date }}</td>
-                      <td class="border px-3 py-2 text-right">
+                      <td class="border px-3 py-2">
+                        {{ tx.receipt }}
+                      </td>
+                      <td class="border px-3 py-2">
+                        <span
+                          class="inline-block px-2 py-0.5 rounded
+                                 bg-gray-100 text-gray-700 text-xs"
+                        >
+                          {{ tx.category }}
+                        </span>
+                      </td>
+                      <td class="border px-3 py-2">
+                        {{ tx.date }}
+                      </td>
+                      <td class="border px-3 py-2 text-right font-medium">
                         ₱{{ formatCurrency(tx.amount) }}
                       </td>
                     </tr>
                   </template>
+
                 </template>
               </template>
             </template>
           </template>
+
+          <!-- EMPTY STATE -->
+          <tr v-if="!purokReports.length">
+            <td colspan="6" class="py-8 text-center text-gray-400">
+              No records found
+            </td>
+          </tr>
         </tbody>
       </table>
     </div>
   </div>
 </template>
+
 
 <script>
 import { useSupabaseClient } from '#imports'

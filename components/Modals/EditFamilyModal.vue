@@ -17,16 +17,56 @@
 
       <!-- BODY -->
       <div class="px-6 py-5 space-y-4">
+
+        <!-- FIRST NAME -->
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">
-            Head of the Family
+            First Name
           </label>
           <input
-            v-model="head_name"
+            v-model="first_name"
             class="w-full rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500"
           />
         </div>
 
+        <!-- MIDDLE NAME -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">
+            Middle Name (optional)
+          </label>
+          <input
+            v-model="middle_name"
+            class="w-full rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500"
+          />
+          <p v-if="middleNameError" class="text-xs text-red-600 mt-1">
+            Middle name must be at least 2 characters or left blank
+          </p>
+        </div>
+
+        <!-- LAST NAME -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">
+            Last Name
+          </label>
+          <input
+            v-model="last_name"
+            class="w-full rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500"
+          />
+        </div>
+
+        <!-- SUFFIX -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">
+            Suffix (optional)
+          </label>
+          <input
+            v-model="suffix"
+            placeholder="Jr., Sr., III"
+            class="w-full rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500"
+          />
+        </div>
+
+        <!-- ADDRESS -->
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">
             Address
@@ -36,6 +76,7 @@
             class="w-full rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500"
           />
         </div>
+
       </div>
 
       <!-- FOOTER -->
@@ -49,7 +90,8 @@
 
         <button
           @click="save"
-          class="px-4 py-2 text-sm rounded bg-blue-600 text-white hover:bg-blue-700"
+          :disabled="middleNameError"
+          class="px-4 py-2 text-sm rounded bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
         >
           Save
         </button>
@@ -60,6 +102,9 @@
 </template>
 
 <script>
+import { logActivity } from '@/utils/activityLogger'
+import { useSupabaseClient } from '#imports'
+
 export default {
   name: 'EditFamilyModal',
 
@@ -72,38 +117,77 @@ export default {
 
   data() {
     return {
-      head_name: '',
+      first_name: '',
+      middle_name: '',
+      last_name: '',
+      suffix: '',
       address: ''
     }
   },
 
+  computed: {
+    middleNameError() {
+      return (
+        this.middle_name &&
+        this.middle_name.trim().length === 1
+      )
+    }
+  },
+
   mounted() {
-    this.head_name = this.family.head_name
-    this.address = this.family.address
+    this.first_name  = this.family.first_name
+    this.middle_name = this.family.middle_name || ''
+    this.last_name   = this.family.last_name
+    this.suffix      = this.family.suffix || ''
+    this.address     = this.family.address
   },
 
   methods: {
     async save() {
-      if (!this.head_name.trim()) {
-        this.$notify.error('Head name is required')
+      if (!this.first_name.trim() || !this.last_name.trim()) {
+        this.$notify.error('First and last name are required')
+        return
+      }
+
+      if (this.middleNameError) {
         return
       }
 
       this.$loading.show('Updating family...')
 
-      try {
-        const supabase = useSupabaseClient()
+      const supabase = useSupabaseClient()
 
+      try {
         await supabase
           .from('families')
           .update({
-            head_name: this.head_name.trim(),
+            first_name: this.first_name.trim(),
+            middle_name: this.middle_name.trim() || null,
+            last_name: this.last_name.trim(),
+            suffix: this.suffix.trim() || null,
             address: this.address.trim()
           })
           .eq('id', this.family.id)
 
+        const changes = []
+
+        if (this.first_name !== this.family.first_name) changes.push('first name')
+        if (this.middle_name !== (this.family.middle_name || '')) changes.push('middle name')
+        if (this.last_name !== this.family.last_name) changes.push('last name')
+        if (this.suffix !== (this.family.suffix || '')) changes.push('suffix')
+        if (this.address !== this.family.address) changes.push('address')
+
+        if (changes.length) {
+          await logActivity(supabase, {
+            action: 'update',
+            entity: 'family',
+            description: `Updated family (${changes.join(', ')})`
+          })
+        }
+
         this.$emit('saved')
         this.$emit('close')
+
       } catch (err) {
         console.error(err)
         this.$notify.error('Failed to update family')

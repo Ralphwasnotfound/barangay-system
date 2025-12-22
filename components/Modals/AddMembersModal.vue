@@ -137,6 +137,9 @@
 </template>
 
 <script>
+import { logActivity } from '@/utils/activityLogger'
+import { useSupabaseClient } from '#imports';
+
 export default {
   props: {
     family: {
@@ -151,7 +154,7 @@ export default {
         middle_name: '',
         last_name: '',
         suffix: '',
-        relation: ''
+        relation: '',
       },
       loading: false,
       error: null
@@ -163,7 +166,7 @@ export default {
       this.error = null
 
       // ❗ Middle name validation
-      if (this.form.middle_name && this.form.middle_name.length === 1) {
+      if (this.form.middle_name && this.form.middle_name.trim().length === 1) {
         this.error = 'Middle name must be at least 2 letters'
         this.loading = false
         return
@@ -171,16 +174,18 @@ export default {
 
       const supabase = useSupabaseClient()
 
-      const { error, status } = await supabase
+      const { data, error, status } = await supabase
         .from('members')
         .insert({
           family_id: this.family.id,
           first_name: this.form.first_name.trim(),
-          middle_name: this.form.middle_name || null,
+          middle_name: this.form.middle_name.trim() || null,
           last_name: this.form.last_name.trim(),
-          suffix: this.form.suffix || null,
-          relation: this.form.relation || null
+          suffix: this.form.suffix.trim() || null,
+          relation: this.form.relation.trim() || null
         })
+        .select()
+        .single()
 
       // 🚫 Duplicate member
       if (status === 409) {
@@ -195,6 +200,12 @@ export default {
         this.loading = false
         return
       }
+
+      await logActivity(supabase, {
+        action: 'create',
+        entity: 'member',
+        description: `Added member of the family: ${data.last_name}, ${data.first_name}`
+      })
 
       // ✅ SUCCESS
       this.$emit('saved')
