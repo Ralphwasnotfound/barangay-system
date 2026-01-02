@@ -1,6 +1,6 @@
 <template>
   <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-3">
-    <div class="w-full max-w-md bg-white rounded-lg shadow-lg">
+    <div class="w-full max-w-md bg-white rounded-xl shadow-lg">
 
       <!-- HEADER -->
       <div class="flex items-center justify-between px-6 py-4 border-b">
@@ -9,7 +9,7 @@
         </h2>
         <button
           @click="$emit('close')"
-          class="text-xl text-gray-500 hover:text-gray-700"
+          class="text-gray-400 hover:text-gray-600 text-xl"
         >
           &times;
         </button>
@@ -20,70 +20,87 @@
 
         <!-- FIRST NAME -->
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">
+          <label class="block mb-1 text-sm font-medium text-gray-900">
             First Name
           </label>
           <input
             v-model="first_name"
-            class="w-full rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500"
+            type="text"
+            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm
+                   rounded-lg focus:ring-blue-500 focus:border-blue-500
+                   block w-full p-2.5"
           />
         </div>
 
         <!-- MIDDLE NAME -->
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">
-            Middle Name (optional)
+          <label class="block mb-1 text-sm font-medium text-gray-900">
+            Middle Name <span class="text-gray-400">(optional)</span>
           </label>
           <input
             v-model="middle_name"
-            class="w-full rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500"
+            type="text"
+            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm
+                   rounded-lg focus:ring-blue-500 focus:border-blue-500
+                   block w-full p-2.5"
           />
-          <p v-if="middleNameError" class="text-xs text-red-600 mt-1">
+          <p v-if="middleNameError" class="mt-1 text-xs text-red-600">
             Middle name must be at least 2 characters or left blank
           </p>
         </div>
 
         <!-- LAST NAME -->
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">
+          <label class="block mb-1 text-sm font-medium text-gray-900">
             Last Name
           </label>
           <input
             v-model="last_name"
-            class="w-full rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500"
+            type="text"
+            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm
+                   rounded-lg focus:ring-blue-500 focus:border-blue-500
+                   block w-full p-2.5"
           />
         </div>
 
         <!-- SUFFIX -->
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">
-            Suffix (optional)
+          <label class="block mb-1 text-sm font-medium text-gray-900">
+            Suffix <span class="text-gray-400">(optional)</span>
           </label>
           <input
             v-model="suffix"
+            type="text"
             placeholder="Jr., Sr., III"
-            class="w-full rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500"
+            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm
+                   rounded-lg focus:ring-blue-500 focus:border-blue-500
+                   block w-full p-2.5"
           />
         </div>
 
         <!-- ADDRESS -->
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">
+          <label class="block mb-1 text-sm font-medium text-gray-900">
             Address
           </label>
           <input
             v-model="address"
-            class="w-full rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500"
+            type="text"
+            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm
+                   rounded-lg focus:ring-blue-500 focus:border-blue-500
+                   block w-full p-2.5"
           />
         </div>
 
       </div>
 
       <!-- FOOTER -->
-      <div class="flex justify-end gap-3 px-6 py-4 border-t">
+      <div class="flex justify-end gap-3 px-6 py-4 border-t bg-gray-50 rounded-b-xl">
         <button
           @click="$emit('close')"
-          class="px-4 py-2 text-sm rounded bg-gray-200 hover:bg-gray-300"
+          class="px-4 py-2 text-sm font-medium text-gray-700
+                 bg-white border border-gray-300 rounded-lg
+                 hover:bg-gray-100 focus:ring-4 focus:ring-gray-200"
         >
           Cancel
         </button>
@@ -91,7 +108,10 @@
         <button
           @click="save"
           :disabled="middleNameError"
-          class="px-4 py-2 text-sm rounded bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
+          class="px-4 py-2 text-sm font-medium text-white
+                 bg-blue-600 rounded-lg hover:bg-blue-700
+                 focus:ring-4 focus:ring-blue-300
+                 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           Save
         </button>
@@ -100,6 +120,7 @@
     </div>
   </div>
 </template>
+
 
 <script>
 import { logActivity } from '@/utils/activityLogger'

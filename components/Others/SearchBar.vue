@@ -16,8 +16,7 @@
         v-model="query"
         type="text"
         placeholder="Search family or address…"
-        class="w-full pl-9 pr-9 py-2 border rounded-lg text-sm
-               focus:ring-2 focus:ring-blue-500 focus:outline-none"
+        class="w-full pl-9 pr-9 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none placeholder:text-gray-400"
       />
 
       <!-- Clear button -->

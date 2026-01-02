@@ -73,7 +73,7 @@
                       v-if="m.payments.length > 0"
                       class="ml-2 text-gray-400 text-xs"
                     >
-                      Cannot delete (has payments)
+                      
                     </span>
                   </template>
                 </td>

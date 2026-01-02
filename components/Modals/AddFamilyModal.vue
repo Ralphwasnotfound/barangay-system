@@ -98,7 +98,7 @@
       </form>
     </div>
   </div>
-</template>
+</template>>
 
 <script>
 import { logActivity } from '@/utils/activityLogger'
